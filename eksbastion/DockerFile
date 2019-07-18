@@ -1,0 +1,47 @@
+# Imagen Base
+FROM centos:7
+MAINTAINER Juan Guillermo Patiño "jpatino@summan.com"
+# Instalación de Paquetes SO
+RUN yum -y install vim net-tools bind-utils wget git bash-completion \ 
+    openssh openssh-server openssh-clients openssl-libs unzip
+# Descargar Kubectl
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin && \
+    mkdir -p /root/.kube
+# Configurar autocompletado de Kubectl
+RUN echo 'source <(kubectl completion bash)' >> /root/.bashrc && \
+    kubectl completion bash >/etc/bash_completion.d/kubectl
+# Descargar aws-aim-authenticator
+RUN curl -LO https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && \
+    chmod +x aws-iam-authenticator && \
+    mv aws-iam-authenticator /usr/local/bin/heptio-authenticator-aws && \
+    ln -s /usr/local/bin/heptio-authenticator-aws /usr/local/bin/aws-iam-authenticator
+# Descargar pip
+RUN curl -LO https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py --user && \
+    ln -s /root/.local/bin/pip /usr/local/bin/pip
+# Descargar aws
+RUN pip install awscli --upgrade --user && \
+    ln -s /root/.local/bin/aws /usr/local/bin/aws
+# Autocompletion aws
+RUN complete -C aws_completer aws && \
+    ln -s /root/.local/bin/aws_completer /usr/local/bin/aws_completer && \
+    echo 'complete -C aws_completer aws' >> /root/.bashrc
+# Descargar terraform
+RUN curl -LO https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_linux_amd64.zip && \
+    unzip terraform_0.12.4_linux_amd64.zip && \
+    chmod +x terraform && \
+    mv terraform /usr/local/bin
+# Descargar helm
+RUN curl -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz && \
+    tar xvzf helm-v2.13.1-linux-amd64.tar.gz && \
+    mv ./linux-amd64/helm /usr/local/bin && \
+    mv ./linux-amd64/tiller /usr/local/bin && \
+    chmod +x /usr/local/bin/helm /usr/local/bin/tiller
+# Crear carpeta .ssh
+RUN mkdir /root/.ssh && chmod 700 /root/.ssh
+# Directorio de Trabajo
+WORKDIR /terraform
+# Commando Docker
+ENTRYPOINT /bin/bash
